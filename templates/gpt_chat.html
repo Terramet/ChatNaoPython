@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/style.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/modal.css') }}" type="text/css">
+    <script src="{{ url_for('static', filename='scripts/ajax.js') }}"></script>
+    <script src="{{ url_for('static', filename='scripts/robot.js') }}"></script>
+    <script src="{{ url_for('static', filename='scripts/recorder-worklet.js') }}"></script>
+    <script src="{{ url_for('static', filename='scripts/streamer-worker.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.min.js"></script>
+    <script>
+        var baseSocketIO = io('/sio');
+    </script>
+    <script src="{{ url_for('static', filename='libs/qi/2/qi.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+    <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
+    <script src="https://www.webrtc-experiment.com/hark.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='libs/roslib.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='scripts/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='scripts/sockets.js') }}"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <div class="menu"><a class="back" href="#"><i class="fa fa-angle-left"></i><img src="https://static.vecteezy.com/system/resources/previews/021/608/790/original/chatgpt-logo-chat-gpt-icon-on-black-background-free-vector.jpg" draggable="false"></a>
+        <div class="name">NaoGPT</div>
+        <div class="members"><b>You</b> ChatGPT</div><button class="btn" id="texto" style="float: right; clear: right; color: #fff" type="button" data-text="connect" data-toggle="modal" data-target="#modalone">Connect</button>
+    </div>
+    <ol class="chat" id="msgs"></ol>
+    <div class="typezone">
+        <form id="chat"><textarea id="textToSay" type="text" placeholder="Say something"></textarea><input class="send" id="chatInput" type="submit" value="" onclick="addToChatSelf(); return false;"></form>
+        <div class="mic" id="startRecord" onclick="startRecording()"></div>
+        <div class="micinvert none" id="stopRecord" onclick="stopRecording()"></div>
+    </div>
+    <div class="modal fade" id="modalone" tabindex="-1" role="dialog" aria-labelledby="onemodalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="onemodalTitle"><strong>Connect to Nao</strong></h3><button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true" style="padding: 0 15px;font-size: 36px;">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div id="texto-modal"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="none" id="connect">
+        <div class="group"><button class="btn" id="NaoPepperBTN">Nao/Pepper</button><button class="btn" id="ROSBasedBTN">ROS Based</button></div>
+    </div>
+    <div class="none" id="NaoPepper">
+        <div class="group"><input id="ip" type="text" required="" placeholder="Robot IP Address"></div>
+        <div class="modal-footer" style="padding: 5px;"><button class="btn" style="color: #fff; background-color: #252C33;" type="button" data-dismiss="modal" onclick="connectNao()">Connect</button></div>
+    </div>
+    <div class="none" id="ROSBased">
+        <div class="group"><input id="ip" type="text" required="" placeholder="Robot IP Address"><input id="topic" type="text" required="" placeholder="ROS Speech Synthesiser Topic"></div>
+        <div class="modal-footer" style="padding: 5px;"><button class="btn" style="color: #fff; background-color: #252C33;" type="button" data-dismiss="modal" onclick="connectROS()">Connect</button></div>
+    </div>
+</body>
+<script>
+    $(function() {
+        $("#textToSay").keypress(function(e) {
+            if (e.keyCode == 13) {
+                manageMessage('self', document.getElementById("textToSay").value);
+                sendGPT(document.getElementById("textToSay").value);
+                document.getElementById("textToSay").value = ''
+                return false;
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        get_system_roles()
+        $("button#texto").click(function(event) {
+            $("#texto-modal .none").remove();
+
+            var attrBtn = $(this).attr("data-text");
+            var textId = document.getElementById(attrBtn);
+            var copy = $(textId).clone();
+            $("#texto-modal").append(copy);
+            $(".modal-body").animate({
+                scrollTop: 0
+            }, 250);
+        });
+
+        $("body").on("click", "button#NaoPepperBTN", function(event) {
+            var textId = document.getElementById('NaoPepper');
+            $("#NaoPepper .none").remove();
+            var copy = $(textId).clone();
+            $("#texto-modal").html(copy);
+            $(".modal-body").animate({
+                scrollTop: 0
+            }, 250);
+        });
+
+        $("body").on("click", "button#ROSBasedBTN", function(event) {
+            var textId = document.getElementById('ROSBased');
+            $("#ROSBased .none").remove();
+            var copy = $(textId).clone();
+            $("#texto-modal").html(copy);
+            $(".modal-body").animate({
+                scrollTop: 0
+            }, 250);
+        });
+    });
+</script>
+
+</html>

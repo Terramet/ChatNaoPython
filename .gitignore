@@ -1,0 +1,5 @@
+api.key
+weather.key
+output.mp3
+uploads/*
+!uploads/.gitkeep
